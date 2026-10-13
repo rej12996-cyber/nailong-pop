@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8f6ed">
+  <meta name="description" content="消灭奶龙：10×10 五色消除，累计积分闯关。">
+  <title>消灭奶龙</title>
+  <link rel="icon" href="./assets/nailong-hero.png" type="image/png">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./src/main.js"></script>
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 11 7-11 7V5Z" fill="currentColor" stroke="none"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 3h8v6a4 4 0 0 1-8 0V3Zm0 2H4v3a4 4 0 0 0 4 4m8-7h4v3a4 4 0 0 1-4 4m-4 1v6m-4 2h8m-9 0h10"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.6 2.2-2 1.1-2.2-.5-2 3.4 1.6 1.6v2.4l-1.6 1.6 2 3.4 2.2-.5 2 1.1L9 21h4l.6-2.2 2-1.1 2.2.5 2-3.4-1.6-1.6v-2.4l1.6-1.6-2-3.4-2.2.5-2-1.1L13 3H9Z"/><circle cx="11" cy="12" r="3"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="17" cy="16" rx="3" ry="3"/></symbol>
+      <symbol id="i-music-off" viewBox="0 0 24 24"><path d="M9 18v-6m0-7 11-2v13M9 9l5-1m4-.7 2-.3M3 3l18 18"/><ellipse cx="6" cy="18" rx="3" ry="3"/><path d="M18.8 13.6a3 3 0 1 0 1.2 2.4"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.4 8.5a2.7 2.7 0 0 1 5.2 1c0 2-2.6 2-2.6 4m0 3h.01"/></symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 7M4 4v6h6"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+      <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 6 5 4 4-7 4 7 5-4-3 12H6L3 6Zm3 15h12"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="消灭奶龙首页">
+        <span class="brand-mark" aria-hidden="true"><img src="./assets/nailong-hero.png" alt="" width="1280" height="1280"></span>
+        <span>消灭奶龙<span class="brand-dot">.</span></span>
+      </a>
+      <nav class="header-tools" aria-label="快捷设置">
+        <button class="music-button" id="music-toggle" type="button" aria-label="关闭音效" title="关闭音效" aria-pressed="true">
+          <svg class="icon"><use id="music-icon" href="#i-music"></use></svg><span id="music-label">音效开</span>
+        </button>
+        <span class="tool-divider" aria-hidden="true"></span>
+        <button class="icon-button" type="button" data-open="settings-dialog" aria-label="打开设置" title="设置"><svg class="icon"><use href="#i-settings"></use></svg></button>
+        <button class="icon-button" type="button" data-open="help-dialog" aria-label="查看玩法说明" title="玩法说明"><svg class="icon"><use href="#i-help"></use></svg></button>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <div id="home-screen">
+      <section class="hero" aria-labelledby="game-title">
+        <div class="intro">
+          <div class="intro-heading">
+            <span class="eyebrow"><span class="status-dot"></span>10 × 10 · 经典消除</span>
+            <h1 id="game-title">消灭<span class="title-second">奶龙</span></h1>
+            <p class="hero-description">同色相连，两个起消。<br>连得越多，得分越高。</p>
+          </div>
+          <div class="play-menu">
+            <button class="primary-button start-button" id="start-game" type="button">
+              <span class="play-disc"><svg class="icon"><use href="#i-play"></use></svg></span>
+              <span class="start-text"><strong>开始游戏</strong></span>
+              <svg class="icon button-arrow"><use href="#i-arrow"></use></svg>
+            </button>
+            <button class="continue-button" id="continue-game" type="button" disabled>
+              <svg class="icon"><use href="#i-clock"></use></svg><span>继续游戏</span><span class="continue-detail" id="continue-detail">暂无存档</span>
+            </button>
+            <div class="quick-actions" aria-label="游戏菜单">
+              <button type="button" data-open="ranking-dialog"><span class="action-icon trophy-icon"><svg class="icon"><use href="#i-trophy"></use></svg></span><span>排行榜</span></button>
+              <button type="button" data-open="settings-dialog"><span class="action-icon settings-icon"><svg class="icon"><use href="#i-settings"></use></svg></span><span>设置</span></button>
+              <button type="button" data-open="help-dialog"><span class="action-icon help-icon"><svg class="icon"><use href="#i-help"></use></svg></span><span>怎么玩</span></button>
+            </div>
+            <button class="restart-link" id="restart-game" type="button"><svg class="icon"><use href="#i-restart"></use></svg>重新开始</button>
+          </div>
+        </div>
+
+        <div class="scene" aria-label="奶龙、袋鼠和牛来的角色主体">
+          <div class="scene-circle" aria-hidden="true"></div>
+          <img class="scene-character character-kangaroo" src="./assets/kangaroo-cutout-v1.png" alt="黄色袋鼠" width="1254" height="1254">
+          <img class="scene-character character-niulai" src="./assets/niulai-cutout-v1.png" alt="牛来中的牛角色" width="1024" height="1536">
+          <img class="scene-character character-nailong" src="./assets/nailong-cutout-v1.png" alt="奶龙" width="512" height="512">
+          <span class="scene-shadow" aria-hidden="true"></span>
+          <img class="hero-character" src="./assets/nailong-hero.png" alt="捧肚大笑的奶龙" width="1280" height="1280" fetchpriority="high">
+        </div>
+      </section>
+
+      <section class="record-strip" aria-label="我的本机游戏纪录">
+        <div class="record-item"><span class="record-symbol"><svg class="icon"><use href="#i-crown"></use></svg></span><div><span class="record-label">历史最高分</span><p><strong id="best-score">0</strong><span>分</span></p></div></div>
+        <div class="record-item"><span class="record-symbol"><svg class="icon"><use href="#i-trophy"></use></svg></span><div><span class="record-label">最高通过关卡</span><p><strong class="record-empty" id="best-level">暂无纪录</strong></p></div></div>
+        <div class="record-item"><span class="record-symbol"><svg class="icon"><use href="#i-grid"></use></svg></span><div><span class="record-label">累计消除</span><p><strong id="total-cleared">0</strong><span>个</span></p></div></div>
+        <span class="local-label"><span></span>我的本机纪录</span>
+      </section>
+      </div>
+      <section id="game-screen" class="game-screen" aria-labelledby="level-heading" hidden>
+        <div class="game-toolbar"><button id="game-home" type="button" class="game-text-button">← 首页</button><span class="game-mode">无尽闯关 · 10 × 10</span><button id="pause-game" type="button" class="game-text-button">暂停</button></div>
+        <div class="game-layout">
+          <aside class="score-panel">
+            <div class="stage-heading"><h2 id="level-heading">第 1 关</h2><span id="target-status" class="target-status">未达标</span></div>
+            <p class="score-label">当前累计总分</p><strong id="game-total" class="game-total">0</strong>
+            <div class="target-line"><div class="target-main"><span>本关目标</span><strong id="game-target">1,000</strong></div><span id="target-gap">还差 1,000</span></div>
+            <progress id="target-progress" max="100" value="0" aria-label="本关目标完成进度"></progress>
+            <dl class="score-details"><div><dt>之前关卡累计</dt><dd id="game-prior">0</dd></div><div><dt>本关消除分</dt><dd id="game-level-score">0</dd></div><div><dt>历史最高分</dt><dd id="game-best">0</dd></div></dl>
+            <div class="level-total-line"><span>本关得分</span><strong id="game-level-total">0</strong></div>
+            <p class="game-instruction">两个起消 · 上下左右相连<br>达到目标后，继续消到结算</p>
+            <div class="game-side-actions"><button type="button" data-open="help-dialog" class="game-text-button">玩法说明</button><button type="button" data-open="settings-dialog" class="game-text-button">设置</button></div>
+          </aside>
+          <div class="board-panel">
+            <div class="board-meta"><span>剩余 <strong id="remaining-count">100</strong> 块</span><span id="input-mode">点击消除</span></div>
+            <div class="board-frame"><div id="board" class="board" role="group" aria-label="10×10 消除棋盘" aria-describedby="move-feedback"></div><div id="score-pop" class="score-pop" aria-hidden="true"></div></div>
+            <p id="move-feedback" class="move-feedback" role="status" aria-live="polite">点击两个及以上相连的同色方块</p>
+            <div class="board-bottom"><span id="bonus-preview">结算时按剩余数量奖励</span><button id="game-restart" type="button" class="game-text-button">重新开始</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <dialog id="settings-dialog" class="modal" aria-labelledby="settings-title">
+    <div class="modal-header"><div><h2 id="settings-title">游戏设置</h2></div><button type="button" class="icon-button" data-close aria-label="关闭设置"><svg class="icon"><use href="#i-close"></use></svg></button></div>
+    <div class="settings-list">
+      <label class="setting-row" for="setting-sound"><span><strong>消除音效</strong><small>消除时播放对应颜色和长度的笑声</small></span><input class="switch" id="setting-sound" type="checkbox" checked></label>
+      <label class="setting-row" for="setting-volume"><span><strong>音效音量</strong><small>调整笑声的播放音量</small></span><span class="volume-control"><input id="setting-volume" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="音效音量"><output id="setting-volume-label">60%</output></span></label>
+      <label class="setting-row" for="setting-confirm"><span><strong>两步确认</strong><small>先选中预览，再点一次消除</small></span><input class="switch" id="setting-confirm" type="checkbox"></label>
+      <label class="setting-row" for="setting-motion"><span><strong>简化动画</strong><small>跳过消除、下落、位移与结算动画</small></span><input class="switch" id="setting-motion" type="checkbox"></label>
+    </div>
+    <p class="modal-note">音效与操作设置会自动保存在当前浏览器。</p>
+    <button type="button" class="primary-button modal-primary" data-close>完成</button>
+  </dialog>
+
+  <dialog id="ranking-dialog" class="modal" aria-labelledby="ranking-title">
+    <div class="modal-header"><div><h2 id="ranking-title">排行榜</h2></div><button type="button" class="icon-button" data-close aria-label="关闭排行榜"><svg class="icon"><use href="#i-close"></use></svg></button></div>
+    <div class="ranking-tabs" role="tablist" aria-label="排行榜类型"><button id="local-tab" type="button" role="tab" aria-selected="true" aria-controls="local-ranking">本机纪录</button><button id="online-tab" type="button" role="tab" aria-selected="false" aria-controls="online-ranking" tabindex="-1">在线榜<span>即将开放</span></button></div>
+    <div id="local-ranking" role="tabpanel" aria-labelledby="local-tab">
+      <div class="ranking-empty" id="ranking-empty"><span class="empty-trophy"><svg class="icon"><use href="#i-trophy"></use></svg></span><h3>暂无纪录</h3><p>开始消除后记录最高分和最高通过关卡。</p></div>
+      <div id="ranking-record" class="ranking-record" hidden><span class="rank-number">01</span><div><strong>我自己</strong><span id="rank-level">—</span></div><strong id="rank-score">0<span>分</span></strong></div>
+      <p class="modal-note">本机纪录仅保存在当前浏览器。</p>
+    </div>
+    <div id="online-ranking" role="tabpanel" aria-labelledby="online-tab" hidden><div class="ranking-empty"><span class="empty-trophy online-trophy"><svg class="icon"><use href="#i-crown"></use></svg></span><h3>在线榜未开放</h3><p>当前仅提供本机纪录。</p></div></div>
+    <button type="button" class="primary-button modal-primary" data-close>关闭</button>
+  </dialog>
+
+  <dialog id="help-dialog" class="modal" aria-labelledby="help-title">
+    <div class="modal-header"><div><h2 id="help-title">玩法说明</h2></div><button type="button" class="icon-button" data-close aria-label="关闭玩法说明"><svg class="icon"><use href="#i-close"></use></svg></button></div>
+    <ol class="rules-list"><li><span class="rule-number">1</span><div><h3>消除同色方块</h3><p>上下左右相连的同色方块，两个及以上可以消除。斜向不算相连。</p></div></li><li><span class="rule-number">2</span><div><h3>连得越多，得分越高</h3><p>一次消除 n 个，获得 5 × n² 分；消除 10 个得 500 分。</p></div></li><li><span class="rule-number">3</span><div><h3>剩余数量决定奖励</h3><p>无法继续消除时结算；全清奖励 2000 分，剩 9 个奖励 380 分，剩 10 个及以上没有奖励。</p></div></li></ol>
+    <div class="rules-tip"><svg class="icon"><use href="#i-arrow"></use></svg><p>方块先向下落，整列清空后右侧各列向左移，不补新块。本关目标依次为 1000、3000、5200、7500、10000、13000、16000、19000；之后为 22100、25300、28600、32000，相邻目标的间隔逐关再增加 100。目标低于 19000 时每关重新随机主色，之后五色等概率生成。按累计总分判断，盘面结束后计入奖励，达标进入下一关；未达标则本局结束。</p></div>
+    <button type="button" class="primary-button modal-primary" data-close>关闭</button>
+  </dialog>
+
+  <dialog id="pause-dialog" class="modal" aria-labelledby="pause-title">
+    <div class="modal-header"><h2 id="pause-title">已暂停</h2><button type="button" class="icon-button" data-close aria-label="继续游戏"><svg class="icon"><use href="#i-close"></use></svg></button></div>
+    <p class="restart-message">当前进度已自动保存，没有时间限制。</p>
+    <button type="button" class="primary-button modal-primary" data-close>继续游戏</button>
+    <button type="button" class="modal-secondary" id="pause-restart">重新开始</button>
+    <button type="button" class="modal-secondary" id="pause-home">保存并返回首页</button>
+  </dialog>
+
+  <dialog id="result-dialog" class="modal result-modal" aria-labelledby="result-title" aria-describedby="result-message" data-persistent>
+    <div class="result-heading"><span id="result-stage" class="eyebrow">第 1 关结算</span><h2 id="result-title">本关通过</h2><p id="result-message">累计分已达标</p></div>
+    <div class="result-total"><span>当前累计总分</span><strong id="result-total">0</strong><small id="result-target">本关目标 1,000</small></div>
+    <dl class="result-details"><div><dt>之前关卡累计</dt><dd id="result-prior">0</dd></div><div><dt>本关消除分</dt><dd id="result-score">0</dd></div><div><dt>剩余块数</dt><dd id="result-remaining">0</dd></div><div><dt>本关奖励</dt><dd id="result-bonus">0</dd></div><div class="level-final"><dt>本关最终分</dt><dd id="result-level-total">0</dd></div><div><dt>历史最高分</dt><dd id="result-best">0</dd></div></dl>
+    <button type="button" id="result-action" class="primary-button modal-primary">下一关</button>
+    <button type="button" id="result-home" class="modal-secondary">返回首页</button>
+  </dialog>
+
+  <div id="settlement-overlay" class="settlement-overlay" hidden>
+    <div class="reward-card" id="reward-card" role="status" aria-live="off"><span>剩余奖励</span><strong id="reward-value">2,000</strong><small id="reward-step">正在清理剩余色块</small><button id="settlement-skip" type="button">跳过动画</button></div>
+  </div>
+
+  <dialog id="restart-dialog" class="modal" aria-labelledby="restart-title">
+    <div class="modal-header"><div><h2 id="restart-title">开始新的一局？</h2></div><button type="button" class="icon-button" data-close aria-label="取消重新开始"><svg class="icon"><use href="#i-close"></use></svg></button></div>
+    <p class="restart-message" id="restart-message">新的一局将从第 1 关开始，历史最高分会保留。</p>
+    <div class="confirmation-actions"><button type="button" class="modal-secondary" data-close>取消</button><button type="button" class="primary-button modal-primary" id="confirm-restart">开始新一局</button></div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <noscript><div class="noscript-notice">请开启 JavaScript 来玩消灭奶龙。</div></noscript>
+</body>
+</html>
