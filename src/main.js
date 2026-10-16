@@ -1,6 +1,8 @@
 import { createGame, playMove, nextLevel, connectedGroup, positions, tileCount, totalScore, targetScore, eliminationScore, remainderBonus, restoreGame } from './game.js';
-import { levelSkins } from './skins.js';
+import { levelSkins, resultMascotForSeed } from './skins.js';
 import { EliminationAudio } from './audio.js';
+import { setupLeaderboard } from './leaderboard.js';
+import { competitionSeed } from './competition.js';
 
 const KEYS = { settings: 'nailong.settings.v1', records: 'nailong.records.v1', session: 'nailong.session.v2' };
 const DEFAULT_RECORDS = { bestScore: 0, bestLevel: 0, totalCleared: 0 };
@@ -97,10 +99,11 @@ function closeDialog(dialog) { if (dialog?.open) dialog.close(); }
 function closeAllDialogs() { document.querySelectorAll('dialog[open]').forEach(closeDialog); }
 function openDialog(id) {
   const dialog = document.getElementById(id);
-  if (!dialog || dialog.open) return;
+  if (!dialog || dialog.open) return false;
   if (id !== 'result-dialog') sounds.stop();
   closeAllDialogs();
   dialog.showModal();
+  return true;
 }
 function showHome() {
   if (busy) return;
@@ -120,6 +123,7 @@ function showGame() {
   hideSettlement();
   closeAllDialogs();
   skins = levelSkins(game.seed);
+  prepareResultIllustration();
   showingGame = true;
   $('#home-screen').hidden = true;
   $('#game-screen').hidden = false;
@@ -134,9 +138,17 @@ function showGame() {
   if (game.phase !== 'playing') showResult();
   else nodes.get(focusedId)?.focus({ preventScroll: true });
 }
-function startGame() {
-  game = createGame(newSeed(), `run-${Date.now()}-${newSeed().toString(16)}`);
+async function startGame() {
+  if (busy) return;
+  setBusy(true);
+  $('#confirm-restart').disabled = true;
+  const cloudRun = await cloud.client.beginRun();
+  game = createGame(cloudRun ? competitionSeed(cloudRun.seed, 1) : newSeed(), cloudRun?.id || `run-${Date.now()}-${newSeed().toString(16)}`);
+  if (cloudRun) game.cloudRun = cloudRun;
+  else if (cloud.client.enabled) toast(cloud.client.lastRunError || '暂时无法领取联网对局，本局保留本机纪录。');
   persist();
+  setBusy(false);
+  $('#confirm-restart').disabled = false;
   showGame();
 }
 function requestRestart() { if (!busy) openDialog('restart-dialog'); }
@@ -347,12 +359,33 @@ async function animateSettlement(revision) {
   }
 }
 
+function prepareResultIllustration() {
+  const mascot = resultMascotForSeed(game.seed);
+  const dialog = $('#result-dialog');
+  dialog.style.setProperty('--mascot-crop', mascot.cropFraction);
+  dialog.style.setProperty('--mascot-fit', mascot.fit);
+  dialog.dataset.mascotId = mascot.id;
+  const image = $('#result-mascot');
+  if (image.dataset.mascotId === mascot.id) return;
+  image.dataset.mascotId = mascot.id;
+  image.alt = `${mascot.color}${mascot.pose}奶龙`;
+  image.hidden = true;
+  image.onload = () => { image.hidden = false; };
+  image.src = mascot.image;
+  if (image.complete && image.naturalWidth) image.hidden = false;
+}
+
 function showResult() {
+  prepareResultIllustration();
   const passed = game.phase === 'passed';
+  if (!passed) cloud.client.remember(game);
+  $('#result-upload').hidden = passed;
+  $('#result-upload').disabled = !game.cloudRun || !cloud.client.enabled;
+  $('#result-upload-note').hidden = passed;
+  $('#result-upload-note').textContent = game.cloudRun ? '可稍后在排行榜中补传战绩。' : cloud.client.enabled ? '此局为本地对局；联网开始的新对局可以上榜。' : '云端排行榜尚未开放，本机纪录已保留。';
   const total = totalScore(game);
   $('#result-stage').textContent = `第 ${format(game.level)} 关结算`;
-  $('#result-title').textContent = passed ? '本关通过' : '本局结束';
-  $('#result-message').textContent = passed ? (tileCount(game.board) === 0 ? '全部消除，奖励 2,000 分' : '盘面已无可消除组，累计分已达标') : `未达到累计目标，还差 ${format(targetScore(game.level) - total)} 分`;
+  $('#result-title').textContent = passed ? '本关通过' : '奶龙吃掉了你的脑子';
   for (const [id, value] of [
     ['result-total', total], ['result-prior', game.priorScore], ['result-score', game.levelScore],
     ['result-remaining', tileCount(game.board)], ['result-bonus', game.bonus],
@@ -361,7 +394,7 @@ function showResult() {
   $('#result-target').textContent = `本关目标 ${format(targetScore(game.level))}`;
   $('#result-action').textContent = passed ? `进入第 ${format(game.level + 1)} 关` : '重新开始';
   $('#result-dialog').classList.toggle('passed', passed);
-  openDialog('result-dialog');
+  if (openDialog('result-dialog')) void sounds.playResult();
 }
 document.addEventListener('click', (event) => {
   const button = event.target.closest('button');
@@ -410,6 +443,7 @@ function selectRankingTab(tab) {
   }
   $('#local-ranking').hidden = !local;
   $('#online-ranking').hidden = local;
+  if (!local) void cloud.refresh();
 }
 for (const tab of document.querySelectorAll('.ranking-tabs [role="tab"]')) {
   tab.addEventListener('click', () => selectRankingTab(tab));
@@ -429,7 +463,7 @@ for (const id of ['game-home', 'pause-home', 'result-home']) $(`#${id}`).addEven
 $('.brand').addEventListener('click', (event) => { event.preventDefault(); showHome(); });
 $('#pause-game').addEventListener('click', () => { if (!busy) openDialog('pause-dialog'); });
 $('#result-action').addEventListener('click', () => {
-  if (game.phase === 'passed') { game = nextLevel(game, newSeed()); persist(); showGame(); }
+  if (game.phase === 'passed') { game = nextLevel(game, game.cloudRun ? competitionSeed(game.cloudRun.seed, game.level + 1) : newSeed()); persist(); showGame(); }
   else if (game.phase === 'failed') startGame();
 });
 $('#settlement-skip').addEventListener('click', () => { skipSettlement = true; rewardFlight?.cancel(); });
@@ -477,6 +511,8 @@ window.addEventListener('storage', (event) => {
   }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) sounds.stop(); });
+const cloud = setupLeaderboard({ toast, openDialog, onUploaded: () => { openDialog('ranking-dialog'); selectRankingTab($('#online-tab')); } });
+$('#result-upload').addEventListener('click', () => { if (game?.phase === 'failed') void cloud.upload(game); });
 syncSettings();
 syncRecords();
 if (savedSession?.game && !game) toast('存档无法恢复，历史纪录已保留。可以开始新的一局。');

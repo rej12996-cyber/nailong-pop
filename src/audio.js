@@ -6,14 +6,29 @@ export const SOUND_COLORS = Object.freeze([
   { name: '紫色', folder: 'purple', semitones: 15 },
 ]);
 
-export function soundForElimination(type, count) {
+export const RANDOM_VOICE_URLS = Object.freeze(Array.from({ length: 10 }, (_, index) =>
+  `./assets/audio/game/v2/voice-${String(index + 1).padStart(2, '0')}.mp3`));
+
+function laughForColor(type) {
+  const color = SOUND_COLORS[type];
+  return { type, kind: 'laugh', semitones: color.semitones, url: `./assets/audio/game/v1/${color.folder}/tiles-11-plus.mp3` };
+}
+
+export const ELIMINATION_SOUND_URLS = Object.freeze([
+  ...RANDOM_VOICE_URLS, ...SOUND_COLORS.map((_, type) => laughForColor(type).url),
+]);
+export const RESULT_SOUND_URL = './assets/audio/game/v3/result-laugh.mp3';
+export const GAME_SOUND_URLS = Object.freeze([...ELIMINATION_SOUND_URLS, RESULT_SOUND_URL]);
+
+export function soundForElimination(type, count, random = Math.random) {
   if (!Number.isInteger(type) || !SOUND_COLORS[type] || !Number.isInteger(count) || count < 2 || count > 100) return null;
-  const clip = Math.min(11, count), color = SOUND_COLORS[type];
-  return { type, count, semitones: color.semitones, url: `./assets/audio/game/v1/${color.folder}/tiles-${clip}${clip === 11 ? '-plus' : ''}.mp3` };
+  if (count >= 11) return { ...laughForColor(type), count };
+  const index = Math.floor(random() * RANDOM_VOICE_URLS.length);
+  return { type, count, kind: 'voice', semitones: 0, url: RANDOM_VOICE_URLS[index] };
 }
 
 export class EliminationAudio {
-  constructor({ createContext, fetcher, onError } = {}) {
+  constructor({ createContext, fetcher, onError, random = Math.random } = {}) {
     this.createContext = createContext || (() => {
       const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
       if (!Context) throw new Error('Audio playback is unavailable');
@@ -21,6 +36,7 @@ export class EliminationAudio {
     });
     this.fetcher = fetcher || ((url) => fetch(url));
     this.onError = onError || (() => {});
+    this.random = random;
     this.enabled = true; this.volume = 0.6; this.revision = 0;
     this.buffers = new Map();
   }
@@ -61,7 +77,7 @@ export class EliminationAudio {
     if (!this.enabled || this.volume === 0) return;
     try {
       await this.unlock();
-      await Promise.allSettled(SOUND_COLORS.flatMap((_, type) => Array.from({ length: 10 }, (_, index) => this.load(soundForElimination(type, index + 2).url))));
+      await Promise.allSettled(GAME_SOUND_URLS.map(url => this.load(url)));
     } catch (error) { this.report(error); }
   }
 
@@ -84,16 +100,27 @@ export class EliminationAudio {
   }
 
   async play(type, count) {
-    const sound = soundForElimination(type, count);
-    if (!sound || !this.enabled || this.volume === 0) return false;
+    if (!this.enabled || this.volume === 0) return false;
+    const sound = soundForElimination(type, count, this.random);
+    if (!sound) return false;
+    return this.playUrl(sound.url);
+  }
+
+  async playResult() {
+    return this.playUrl(RESULT_SOUND_URL);
+  }
+
+  async playUrl(url) {
+    if (!this.enabled || this.volume === 0) return false;
     this.stop();
     const revision = this.revision;
     try {
       await this.unlock();
-      const buffer = await this.load(sound.url);
+      const buffer = await this.load(url);
       if (revision !== this.revision || !this.enabled || this.volume === 0) return false;
       const source = this.context.createBufferSource(), envelope = this.context.createGain();
       source.buffer = buffer;
+      source.loop = false;
       source.connect(envelope); envelope.connect(this.master);
       const cleanup = () => {
         source.disconnect(); envelope.disconnect();

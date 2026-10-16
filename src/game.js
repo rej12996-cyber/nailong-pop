@@ -200,6 +200,7 @@ export function restoreGame(saved) {
       ? (totalScore(replay) >= previousTarget(replay.level, saved.rulesVersion) ? 'passed' : 'failed') : replay.phase;
     if (replay.levelScore !== saved.levelScore || replay.bonus !== saved.bonus || expectedSavedPhase !== saved.phase ||
       JSON.stringify(replay.board) !== JSON.stringify(saved.board) || !countValue(totalScore(replay))) return null;
+    if (saved.cloudRun && typeof saved.cloudRun.ticket === 'string' && Number.isInteger(saved.cloudRun.seed)) replay.cloudRun = { ...saved.cloudRun };
     return replay;
   } catch { return null; }
 }

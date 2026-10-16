@@ -1,4 +1,16 @@
 import { characterMapping } from './game.js';
+import { RESULT_MASCOTS } from '../assets/result-mascots/v1/mascots.js';
+
+export { RESULT_MASCOTS };
+
+// Level seeds are random. Keep each level's illustration stable when reopened.
+export function resultMascotForSeed(seed) {
+  let value = (seed >>> 0) ^ 0x9e3779b9;
+  value = Math.imul(value ^ (value >>> 16), 0x21f0aaad);
+  value = Math.imul(value ^ (value >>> 15), 0x735a2d97);
+  value = (value ^ (value >>> 15)) >>> 0;
+  return RESULT_MASCOTS[value % RESULT_MASCOTS.length];
+}
 
 export const CHARACTERS = Object.freeze(['托腮思考', '挥手姿态', '小狗形态', '盘绕形态', '公鸡形态', '捧肚大笑', '侧身站立']);
 export const TILE_SKINS = Object.freeze([

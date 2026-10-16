@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f8f6ed">
+  <meta name="theme-color" content="#fffdf6">
   <meta name="description" content="消灭奶龙：10×10 五色消除，累计积分闯关。">
   <title>消灭奶龙</title>
   <link rel="icon" href="./assets/nailong-hero.png" type="image/png">
@@ -116,8 +116,8 @@
   <dialog id="settings-dialog" class="modal" aria-labelledby="settings-title">
     <div class="modal-header"><div><h2 id="settings-title">游戏设置</h2></div><button type="button" class="icon-button" data-close aria-label="关闭设置"><svg class="icon"><use href="#i-close"></use></svg></button></div>
     <div class="settings-list">
-      <label class="setting-row" for="setting-sound"><span><strong>消除音效</strong><small>消除时播放对应颜色和长度的笑声</small></span><input class="switch" id="setting-sound" type="checkbox" checked></label>
-      <label class="setting-row" for="setting-volume"><span><strong>音效音量</strong><small>调整笑声的播放音量</small></span><span class="volume-control"><input id="setting-volume" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="音效音量"><output id="setting-volume-label">60%</output></span></label>
+      <label class="setting-row" for="setting-sound"><span><strong>消除音效</strong><small>2–10 块随机台词，11 块及以上播放大笑</small></span><input class="switch" id="setting-sound" type="checkbox" checked></label>
+      <label class="setting-row" for="setting-volume"><span><strong>音效音量</strong><small>调整消除音效的播放音量</small></span><span class="volume-control"><input id="setting-volume" type="range" min="0" max="1" step="0.05" value="0.6" aria-label="音效音量"><output id="setting-volume-label">60%</output></span></label>
       <label class="setting-row" for="setting-confirm"><span><strong>两步确认</strong><small>先选中预览，再点一次消除</small></span><input class="switch" id="setting-confirm" type="checkbox"></label>
       <label class="setting-row" for="setting-motion"><span><strong>简化动画</strong><small>跳过消除、下落、位移与结算动画</small></span><input class="switch" id="setting-motion" type="checkbox"></label>
     </div>
@@ -133,7 +133,16 @@
       <div id="ranking-record" class="ranking-record" hidden><span class="rank-number">01</span><div><strong>我自己</strong><span id="rank-level">—</span></div><strong id="rank-score">0<span>分</span></strong></div>
       <p class="modal-note">本机纪录仅保存在当前浏览器。</p>
     </div>
-    <div id="online-ranking" role="tabpanel" aria-labelledby="online-tab" hidden><div class="ranking-empty"><span class="empty-trophy online-trophy"><svg class="icon"><use href="#i-crown"></use></svg></span><h3>在线榜未开放</h3><p>当前仅提供本机纪录。</p></div></div>
+    <div id="online-ranking" role="tabpanel" aria-labelledby="online-tab" hidden>
+      <p id="cloud-message" class="modal-note" role="status">正在读取排行榜…</p>
+      <h3 class="cloud-section-title">我的排名</h3><div id="cloud-my-rank" class="cloud-my-rank">尚未上传有效战绩</div>
+      <div class="cloud-tools"><button id="cloud-profile-button" type="button" class="cloud-text-button"><span id="cloud-profile-label">设置玩家资料</span></button><button id="cloud-refresh" type="button" class="cloud-text-button">刷新</button><button id="cloud-recover-button" type="button" class="cloud-text-button">恢复身份</button></div>
+      <p id="cloud-identity-note" class="modal-note"></p>
+      <button id="cloud-code-button" type="button" class="cloud-text-button" hidden>生成身份恢复码</button>
+      <section id="cloud-pending-section" hidden><h3 class="cloud-section-title">待上传战绩</h3><div id="cloud-pending"></div><p class="modal-note">最多保留最近10局；清除网站数据会丢失尚未上传的记录。</p></section>
+      <h3 class="cloud-section-title">全服前100名</h3><div id="cloud-top" class="cloud-top"></div>
+      <p class="modal-note">分数相同先提交者在前 · 日期为北京时间的上榜日期</p>
+    </div>
     <button type="button" class="primary-button modal-primary" data-close>关闭</button>
   </dialog>
 
@@ -152,12 +161,40 @@
     <button type="button" class="modal-secondary" id="pause-home">保存并返回首页</button>
   </dialog>
 
-  <dialog id="result-dialog" class="modal result-modal" aria-labelledby="result-title" aria-describedby="result-message" data-persistent>
-    <div class="result-heading"><span id="result-stage" class="eyebrow">第 1 关结算</span><h2 id="result-title">本关通过</h2><p id="result-message">累计分已达标</p></div>
+  <dialog id="result-dialog" class="modal result-modal" aria-labelledby="result-title" data-persistent>
+    <div class="result-illustration" aria-hidden="true"><img id="result-mascot" src="./assets/result-mascots/v1/06/02.png" alt="捧肚大笑的奶龙" decoding="async"></div>
+    <div class="result-card">
+    <div class="result-heading"><span id="result-stage" class="eyebrow">第 1 关结算</span><h2 id="result-title">本关通过</h2></div>
     <div class="result-total"><span>当前累计总分</span><strong id="result-total">0</strong><small id="result-target">本关目标 1,000</small></div>
     <dl class="result-details"><div><dt>之前关卡累计</dt><dd id="result-prior">0</dd></div><div><dt>本关消除分</dt><dd id="result-score">0</dd></div><div><dt>剩余块数</dt><dd id="result-remaining">0</dd></div><div><dt>本关奖励</dt><dd id="result-bonus">0</dd></div><div class="level-final"><dt>本关最终分</dt><dd id="result-level-total">0</dd></div><div><dt>历史最高分</dt><dd id="result-best">0</dd></div></dl>
     <button type="button" id="result-action" class="primary-button modal-primary">下一关</button>
+    <button type="button" id="result-upload" class="cloud-upload-button" hidden>上传排行榜</button>
+    <p id="result-upload-note" class="cloud-result-note" hidden></p>
     <button type="button" id="result-home" class="modal-secondary">返回首页</button>
+    </div>
+  </dialog>
+
+  <dialog id="cloud-profile-dialog" class="modal cloud-dialog" aria-labelledby="cloud-profile-title">
+    <div class="modal-header"><h2 id="cloud-profile-title">玩家资料</h2><button type="button" class="icon-button" data-close aria-label="关闭玩家资料">×</button></div>
+    <form id="cloud-profile-form">
+      <label class="cloud-field" for="cloud-name">昵称<input id="cloud-name" name="nickname" minlength="2" maxlength="32" autocomplete="nickname" placeholder="2–16个字符" required></label>
+      <p class="modal-note">头像和昵称的组合不能与其他玩家相同，之后可以修改。</p>
+      <span class="cloud-field-label">选择头像</span><div id="cloud-avatars" class="cloud-avatars" role="group" aria-label="奶龙头像"></div>
+      <p id="cloud-profile-error" class="cloud-error" role="status"></p>
+      <button id="cloud-profile-submit" class="primary-button modal-primary" type="submit">保存玩家资料</button>
+      <button id="cloud-profile-recover" type="button" class="modal-secondary">已有恢复码？找回原身份</button>
+    </form>
+  </dialog>
+  <dialog id="cloud-recover-dialog" class="modal cloud-dialog" aria-labelledby="cloud-recover-title">
+    <div class="modal-header"><h2 id="cloud-recover-title">恢复玩家身份</h2><button type="button" class="icon-button" data-close aria-label="关闭身份恢复">×</button></div>
+    <p class="modal-note">输入之前保存的恢复码，找回云端资料和最高分。恢复后会切换到该身份，本机游戏存档保持不变。</p>
+    <form id="cloud-recover-form"><label class="cloud-field" for="cloud-recover-input">恢复码<input id="cloud-recover-input" autocomplete="off" autocapitalize="characters" spellcheck="false" required></label><p id="cloud-recover-error" class="cloud-error" role="status"></p><button id="cloud-recover-submit" class="primary-button modal-primary" type="submit">恢复身份</button></form>
+  </dialog>
+  <dialog id="cloud-code-dialog" class="modal cloud-dialog" aria-labelledby="cloud-code-title">
+    <div class="modal-header"><h2 id="cloud-code-title">保存身份恢复码</h2><button type="button" class="icon-button" data-close aria-label="关闭恢复码">×</button></div>
+    <p class="modal-note">恢复码相当于密码，请勿分享。换设备、换浏览器或网站换域名前可用它找回身份；新生成后旧码失效。本窗口关闭后不再显示。</p>
+    <input id="cloud-recovery-code" class="cloud-code" readonly aria-label="你的恢复码" autocomplete="off">
+    <button id="cloud-copy-code" class="primary-button modal-primary" type="button">复制恢复码</button><button class="modal-secondary" type="button" data-close>已保存，关闭</button>
   </dialog>
 
   <div id="settlement-overlay" class="settlement-overlay" hidden>
