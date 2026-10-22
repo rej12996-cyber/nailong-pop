@@ -1,7 +1,7 @@
 import { AVATARS } from './avatars.js';
 import { CLOUD_API_BASE } from './cloud-config.js';
 import { replayPayload } from './competition.js';
-import { isBeta, storageKey } from './environment.js';
+import { storageKey } from './environment.js';
 
 const KEY = storageKey('nailong.cloud.v1');
 const QUEUE_KEY = storageKey('nailong.pending.v1');
@@ -85,13 +85,13 @@ export class CloudClient {
   }
 }
 
-export function setupLeaderboard({ toast, openDialog, onUploaded }) {
+export function setupLeaderboard({ toast, openDialog, onUploaded, onUploadState = () => {} }) {
   const client = new CloudClient();
   const $ = id => document.getElementById(id);
   let selectedAvatar = AVATARS[0].id;
   let uploadRunId = null;
   let operating = false;
-  const boardName = isBeta ? '内测总榜' : '永久总榜';
+  const boardName = '永久总榜';
   document.querySelector('#online-tab span').textContent = client.enabled ? boardName : '待开放';
   function notice(text) { $('cloud-message').textContent = text; }
   function makeRow(row, mine = false) {
@@ -111,7 +111,8 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
       const row = document.createElement('div'); row.className = 'cloud-pending-row';
       const label = document.createElement('span'); label.textContent = `${entry.score.toLocaleString('zh-CN')} 分 · 第 ${entry.level} 关`;
       const button = document.createElement('button'); button.type = 'button'; button.className = 'cloud-text-button'; button.textContent = '上传';
-      button.addEventListener('click', () => void editProfile(entry.runId)); row.append(label, button); $('cloud-pending').append(row);
+      button.disabled = operating;
+      button.addEventListener('click', () => void uploadScore(entry.runId)); row.append(label, button); $('cloud-pending').append(row);
     }
     $('cloud-pending-section').hidden = !client.pending().length;
   }
@@ -120,13 +121,14 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
     $('cloud-profile-label').textContent = player ? `${player.name} · 修改资料` : '设置玩家资料';
     $('cloud-code-button').hidden = !player;
     $('cloud-code-button').textContent = player?.hasRecovery ? '更换恢复码（旧码失效）' : '生成身份恢复码';
-    $('cloud-identity-note').textContent = (player ? '身份保存在当前浏览器。更换设备或域名前，请保存恢复码。' : '首次上传时设置头像和昵称；有恢复码可先找回原身份。') + (isBeta ? ' 内测身份与战绩不带入正式服。' : '');
+    $('cloud-identity-note').textContent = player ? '身份保存在当前浏览器。更换设备或域名前，请保存恢复码。' : '首次上传时设置头像和昵称；有恢复码可先找回原身份。';
     renderPending();
   }
   async function refresh() {
     renderProfile();
     if (!client.enabled) { notice('云端排行榜尚未开放。正式入口就绪后启用，本机纪录继续保留。'); return; }
     notice('正在读取排行榜…');
+    $('cloud-refresh').disabled = true;
     try {
       if (client.state.token) await client.profile();
       const result = await client.request('/leaderboard');
@@ -135,10 +137,22 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
       if (result.me) $('cloud-my-rank').append(makeRow(result.me, true));
       else $('cloud-my-rank').textContent = '我的排名：尚未上传有效战绩';
       notice(result.totalPlayers ? `${boardName} · ${result.totalPlayers.toLocaleString('zh-CN')} 人上榜 · 前100名` : '暂无云端战绩，等待第一位玩家。');
-      renderProfile();
-    } catch (error) { notice(error.message); renderProfile(); }
+      $('cloud-refresh').textContent = '刷新'; renderProfile();
+    } catch (error) { notice(error.message); $('cloud-refresh').textContent = '重新连接'; renderProfile(); }
+    finally { $('cloud-refresh').disabled = false; }
   }
   const avatarButtons = new Map();
+  let avatarPage = 0;
+  const shortViewport = matchMedia('(max-height: 500px)');
+  const avatarsPerPage = () => shortViewport.matches ? 5 : 10;
+  function renderAvatarPage() {
+    const size = avatarsPerPage(), pages = Math.ceil(AVATARS.length / size);
+    avatarPage = Math.min(avatarPage, pages - 1);
+    AVATARS.forEach((avatar, index) => { avatarButtons.get(avatar.id).hidden = Math.floor(index / size) !== avatarPage; });
+    $('avatar-page').textContent = `${avatarPage + 1} / ${pages}`;
+    $('avatar-previous').disabled = avatarPage === 0;
+    $('avatar-next').disabled = avatarPage === pages - 1;
+  }
   function pickAvatar(id) {
     selectedAvatar = id;
     for (const [value, button] of avatarButtons) button.setAttribute('aria-pressed', String(value === id));
@@ -150,14 +164,39 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
     button.append(image); button.addEventListener('click', () => pickAvatar(avatar.id));
     avatarButtons.set(avatar.id, button); $('cloud-avatars').append(button);
   }
+  $('avatar-previous').addEventListener('click', () => { avatarPage -= 1; renderAvatarPage(); });
+  $('avatar-next').addEventListener('click', () => { avatarPage += 1; renderAvatarPage(); });
+  shortViewport.addEventListener('change', () => { avatarPage = Math.floor(AVATARS.findIndex(item => item.id === selectedAvatar) / avatarsPerPage()); renderAvatarPage(); });
+  renderAvatarPage();
   async function editProfile(runId = null) {
+    if (operating) return;
     if (!client.enabled) { toast('云端排行榜尚未开放，本机纪录已保留。'); return; }
     uploadRunId = runId;
     $('cloud-profile-error').textContent = '';
     $('cloud-name').value = client.state.player?.name || '';
     pickAvatar(client.state.player?.avatar || selectedAvatar);
+    avatarPage = Math.floor(AVATARS.findIndex(item => item.id === selectedAvatar) / avatarsPerPage()); renderAvatarPage();
     $('cloud-profile-submit').textContent = runId ? '保存资料并上传战绩' : '保存玩家资料';
     openDialog('cloud-profile-dialog');
+  }
+  function uploadMessage(result) {
+    return result.duplicate ? '这局战绩已经上传。' : result.improved ? '战绩已上榜！' : '上传成功，榜单保留你的最高分。';
+  }
+  async function uploadScore(runId) {
+    if (operating) return;
+    if (!client.state.token || !client.state.player) { await editProfile(runId); return; }
+    if (client.state.uploaded?.includes(runId)) { onUploaded(); return; }
+    operating = true; renderPending();
+    onUploadState({ runId, status: 'uploading', message: '正在校验对局，请稍候…' });
+    try {
+      const result = await client.upload(runId);
+      const message = uploadMessage(result);
+      onUploadState({ runId, status: 'success', message }); toast(message); onUploaded();
+    } catch (error) {
+      onUploadState({ runId, status: 'error', message: `${error.message} 战绩已保留，可重试。` });
+      toast(error.message);
+      if (error.status === 401) { operating = false; await editProfile(runId); }
+    } finally { operating = false; renderProfile(); }
   }
   $('cloud-profile-form').addEventListener('submit', async event => {
     event.preventDefault(); if (operating) return;
@@ -165,12 +204,20 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
     try {
       await client.saveProfile({ name: $('cloud-name').value, avatar: selectedAvatar });
       if (uploadRunId) {
+        onUploadState({ runId: uploadRunId, status: 'uploading', message: '正在校验对局，请稍候…' });
         const result = await client.upload(uploadRunId);
-        toast(result.duplicate ? '这局战绩已经上传。' : result.improved ? '战绩已上榜！' : '上传成功，榜单保留你的最高分。');
+        const message = uploadMessage(result);
+        onUploadState({ runId: uploadRunId, status: 'success', message }); toast(message);
       } else toast('玩家资料已保存。');
       $('cloud-profile-dialog').close(); renderProfile(); onUploaded(); void refresh();
       if (!client.persistent) toast('当前浏览器无法保存身份，请立即生成并保存恢复码。');
-    } catch (error) { $('cloud-profile-error').textContent = error.message; }
+    } catch (error) {
+      $('cloud-profile-error').textContent = error.message;
+      if (uploadRunId) {
+        onUploadState({ runId: uploadRunId, status: 'error', message: `${error.message} 战绩已保留，可重试。` });
+        $('cloud-profile-submit').textContent = '重试上传战绩';
+      }
+    }
     finally { operating = false; $('cloud-profile-submit').disabled = false; }
   });
   $('cloud-profile-button').addEventListener('click', () => void editProfile());
@@ -201,5 +248,5 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
   });
   $('cloud-code-dialog').addEventListener('close', () => { $('cloud-recovery-code').value = ''; });
   renderProfile();
-  return { client, refresh, upload: game => { client.remember(game); return editProfile(game.runId); } };
+  return { client, refresh, upload: game => { client.remember(game); return uploadScore(game.runId); } };
 }

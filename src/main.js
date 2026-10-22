@@ -3,15 +3,9 @@ import { levelSkins, resultMascotForSeed } from './skins.js';
 import { EliminationAudio } from './audio.js';
 import { setupLeaderboard } from './leaderboard.js';
 import { competitionSeed } from './competition.js';
-import { isBeta, storageKey } from './environment.js';
+import { storageKey } from './environment.js';
 
 const KEYS = Object.fromEntries(Object.entries({ settings: 'nailong.settings.v1', records: 'nailong.records.v1', session: 'nailong.session.v2' }).map(([name, key]) => [name, storageKey(key)]));
-if (isBeta) {
-  const notice = document.createElement('p');
-  notice.className = 'beta-notice';
-  notice.textContent = '联网内测 · 正式上线将清空内测战绩和玩家身份';
-  document.querySelector('.site-header').after(notice);
-}
 const DEFAULT_RECORDS = { bestScore: 0, bestLevel: 0, totalCleared: 0 };
 const $ = (selector) => document.querySelector(selector);
 const format = (value) => value.toLocaleString('zh-CN');
@@ -59,6 +53,7 @@ let selectedIds = [];
 let focusedId = null;
 let skipSettlement = false;
 let rewardFlight = null;
+let resultUploadState = null;
 const nodes = new Map();
 const reducedMotion = () => settings.reducedMotion || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
@@ -83,8 +78,9 @@ function syncRecords() {
   const unit = document.createElement('span');
   unit.textContent = '分';
   $('#rank-score').append(unit);
-  $('#continue-game').disabled = !game;
-  $('#continue-detail').textContent = game ? `第 ${game.level} 关 · ${format(totalScore(game))} 分${game.phase !== 'playing' ? ' · 已结算' : ''}` : '暂无存档';
+  const resumable = game && game.phase !== 'failed';
+  $('#continue-game').disabled = busy || !resumable;
+  $('#continue-detail').textContent = resumable ? `第 ${game.level} 关 · ${format(totalScore(game))} 分` : game ? '上局已结束' : '暂无存档';
   $('#restart-message').textContent = game ? `重新开始将替换第 ${game.level} 关的当前进度，从第 1 关、0 分开始。历史最高分会保留。` : '新的一局将从第 1 关、0 分开始，历史最高分会保留。';
 }
 function syncSettings() {
@@ -100,7 +96,8 @@ function syncSettings() {
   $('#music-icon').setAttribute('href', settings.sound ? '#i-music' : '#i-music-off');
   sounds.configure({ enabled: settings.sound, volume: settings.volume });
   document.body.classList.toggle('reduced-motion', settings.reducedMotion);
-  $('#input-mode').textContent = settings.confirm ? '先选中，再点一次' : '点击消除';
+  $('#input-mode').textContent = settings.confirm ? '两步确认' : '';
+  $('#input-mode').hidden = !settings.confirm;
 }
 function closeDialog(dialog) { if (dialog?.open) dialog.close(); }
 function closeAllDialogs() { document.querySelectorAll('dialog[open]').forEach(closeDialog); }
@@ -121,7 +118,7 @@ function showHome() {
   $('#home-screen').hidden = false;
   document.body.classList.remove('playing');
   syncRecords();
-  $('#continue-game').focus({ preventScroll: true });
+  ($('#continue-game').disabled ? $('#start-game') : $('#continue-game')).focus({ preventScroll: true });
   window.scrollTo({ top: 0 });
 }
 function showGame() {
@@ -148,22 +145,35 @@ function showGame() {
 async function startGame() {
   if (busy) return;
   setBusy(true);
-  $('#confirm-restart').disabled = true;
   const cloudRun = await cloud.client.beginRun();
+  setBusy(false);
+  if (!cloudRun && cloud.client.enabled) {
+    $('#network-error').textContent = cloud.client.lastRunError || '暂时无法连接排行榜服务器，请重试。';
+    openDialog('network-dialog');
+    return;
+  }
+  finishStart(cloudRun);
+}
+function finishStart(cloudRun) {
   game = createGame(cloudRun ? competitionSeed(cloudRun.seed, 1) : newSeed(), cloudRun?.id || `run-${Date.now()}-${newSeed().toString(16)}`);
   if (cloudRun) game.cloudRun = cloudRun;
-  else if (cloud.client.enabled) toast(cloud.client.lastRunError || '暂时无法领取联网对局，本局保留本机纪录。');
   persist();
-  setBusy(false);
-  $('#confirm-restart').disabled = false;
   showGame();
 }
-function requestRestart() { if (!busy) openDialog('restart-dialog'); }
+function requestRestart() {
+  if (busy) return;
+  if (game && game.phase !== 'failed') openDialog('restart-dialog');
+  else void startGame();
+}
 function setBusy(value) {
   busy = value;
   $('#board').setAttribute('aria-busy', String(value));
   $('#board').classList.toggle('busy', value);
-  for (const id of ['game-home', 'pause-game', 'game-restart']) $(`#${id}`).disabled = value;
+  for (const id of ['game-home', 'pause-game', 'game-restart', 'start-game', 'restart-game', 'confirm-restart', 'result-action', 'network-retry', 'network-practice', 'network-cancel']) $(`#${id}`).disabled = value;
+  $('#continue-game').disabled = value || !game || game.phase === 'failed';
+  $('#network-retry').textContent = value ? '正在连接…' : '重新连接';
+  $('#network-dialog [data-close]').disabled = value;
+  $('#start-game').setAttribute('aria-busy', String(value));
   document.querySelectorAll('.header-tools button[data-open]').forEach((button) => { button.disabled = value; });
 }
 function placeTile(element, x, y) {
@@ -227,13 +237,15 @@ function renderScore(displayBonus = game.bonus, displayBest = records.bestScore)
   $('#target-status').classList.toggle('reached', reached);
   $('#target-progress').value = Math.min(100, total / target * 100);
   $('#remaining-count').textContent = String(tileCount(game.board));
+  $('#run-network-status').textContent = game.cloudRun ? '联网对局 · 可上榜' : cloud.client.enabled ? '本机练习' : '本机对局';
+  $('#run-network-status').classList.toggle('is-online', !!game.cloudRun);
   const count = tileCount(game.board);
   $('#remaining-count').textContent = String(game.phase !== 'playing' && nodes.size === 0 ? 0 : count);
   $('#bonus-preview').textContent = count < 10 ? `当前剩余奖励 ${format(remainderBonus(count))} 分 · 结算发放` : '剩余少于 10 块时有结算奖励';
   resetFeedback();
 }
 function resetFeedback() {
-  $('#move-feedback').textContent = game?.lastMove ? `上次消除 ${game.lastMove.count} 块，获得 ${format(game.lastMove.score)} 分` : '点击两个及以上相连的同色方块';
+  $('#move-feedback').textContent = game?.lastMove ? `上次消除 ${game.lastMove.count} 块，获得 ${format(game.lastMove.score)} 分` : '';
 }
 function clearSelection() {
   selectedIds = [];
@@ -386,10 +398,7 @@ function showResult() {
   prepareResultIllustration();
   const passed = game.phase === 'passed';
   if (!passed) cloud.client.remember(game);
-  $('#result-upload').hidden = passed;
-  $('#result-upload').disabled = !game.cloudRun || !cloud.client.enabled;
-  $('#result-upload-note').hidden = passed;
-  $('#result-upload-note').textContent = game.cloudRun ? '可稍后在排行榜中补传战绩。' : cloud.client.enabled ? '此局为本地对局；联网开始的新对局可以上榜。' : '云端排行榜尚未开放，本机纪录已保留。';
+  renderUploadState();
   const total = totalScore(game);
   $('#result-stage').textContent = `第 ${format(game.level)} 关结算`;
   $('#result-title').textContent = passed ? '本关通过' : '奶龙吃掉了你的脑子';
@@ -402,6 +411,19 @@ function showResult() {
   $('#result-action').textContent = passed ? `进入第 ${format(game.level + 1)} 关` : '重新开始';
   $('#result-dialog').classList.toggle('passed', passed);
   if (openDialog('result-dialog')) void sounds.playResult();
+}
+function renderUploadState(state) {
+  if (!game) return;
+  if (state) resultUploadState = state;
+  const passed = game.phase === 'passed';
+  const uploaded = cloud.client.state.uploaded?.includes(game.runId);
+  const current = resultUploadState?.runId === game.runId ? resultUploadState : null;
+  const uploading = current?.status === 'uploading';
+  $('#result-upload').hidden = passed;
+  $('#result-upload').disabled = uploading || uploaded || !game.cloudRun || !cloud.client.enabled;
+  $('#result-upload').textContent = uploading ? '正在校验并上传…' : uploaded ? '战绩已上传' : current?.status === 'error' ? '重试上传排行榜' : '上传排行榜';
+  $('#result-upload-note').hidden = passed;
+  $('#result-upload-note').textContent = current?.message || (uploaded ? '榜单保留你的最高分。' : game.cloudRun ? '上传失败可重试，也可在排行榜中补传。' : cloud.client.enabled ? '本局为本机练习，联网新对局可以上榜。' : '本机纪录已保留。');
 }
 document.addEventListener('click', (event) => {
   const button = event.target.closest('button');
@@ -462,13 +484,27 @@ for (const tab of document.querySelectorAll('.ranking-tabs [role="tab"]')) {
     next.focus();
   });
 }
-$('#start-game').addEventListener('click', () => game ? requestRestart() : startGame());
-$('#continue-game').addEventListener('click', () => { if (game) showGame(); });
+$('#start-game').addEventListener('click', requestRestart);
+$('#continue-game').addEventListener('click', () => { if (!busy && game && game.phase !== 'failed') showGame(); });
 for (const id of ['restart-game', 'game-restart', 'pause-restart']) $(`#${id}`).addEventListener('click', requestRestart);
 $('#confirm-restart').addEventListener('click', startGame);
 for (const id of ['game-home', 'pause-home', 'result-home']) $(`#${id}`).addEventListener('click', showHome);
 $('.brand').addEventListener('click', (event) => { event.preventDefault(); showHome(); });
 $('#pause-game').addEventListener('click', () => { if (!busy) openDialog('pause-dialog'); });
+$('#network-retry').addEventListener('click', startGame);
+$('#network-practice').addEventListener('click', () => { if (!busy) finishStart(null); });
+$('#network-cancel').addEventListener('click', () => closeDialog($('#network-dialog')));
+$('#network-dialog').addEventListener('cancel', event => { if (busy) event.preventDefault(); });
+$('#network-dialog').addEventListener('close', () => { if (showingGame && game?.phase === 'failed' && !document.querySelector('dialog[open]')) showResult(); });
+for (const id of ['cloud-profile-dialog', 'cloud-recover-dialog', 'ranking-dialog']) {
+  $(`#${id}`).addEventListener('close', () => { if (showingGame && game?.phase === 'failed' && !document.querySelector('dialog[open]')) showResult(); });
+}
+$('#help-page-toggle').addEventListener('click', () => {
+  const levels = $('#help-levels').hidden;
+  $('#help-levels').hidden = !levels;
+  $('#help-basics').hidden = levels;
+  $('#help-page-toggle').textContent = levels ? '← 返回基础玩法' : '查看关卡规则 →';
+});
 $('#result-action').addEventListener('click', () => {
   if (game.phase === 'passed') { game = nextLevel(game, game.cloudRun ? competitionSeed(game.cloudRun.seed, game.level + 1) : newSeed()); persist(); showGame(); }
   else if (game.phase === 'failed') startGame();
@@ -518,7 +554,7 @@ window.addEventListener('storage', (event) => {
   }
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) sounds.stop(); });
-const cloud = setupLeaderboard({ toast, openDialog, onUploaded: () => { openDialog('ranking-dialog'); selectRankingTab($('#online-tab')); } });
+const cloud = setupLeaderboard({ toast, openDialog, onUploadState: renderUploadState, onUploaded: () => { renderUploadState(); openDialog('ranking-dialog'); selectRankingTab($('#online-tab')); } });
 $('#result-upload').addEventListener('click', () => { if (game?.phase === 'failed') void cloud.upload(game); });
 syncSettings();
 syncRecords();

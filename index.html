@@ -98,13 +98,12 @@
             <progress id="target-progress" max="100" value="0" aria-label="本关目标完成进度"></progress>
             <dl class="score-details"><div><dt>之前关卡累计</dt><dd id="game-prior">0</dd></div><div><dt>本关消除分</dt><dd id="game-level-score">0</dd></div><div><dt>历史最高分</dt><dd id="game-best">0</dd></div></dl>
             <div class="level-total-line"><span>本关得分</span><strong id="game-level-total">0</strong></div>
-            <p class="game-instruction">两个起消 · 上下左右相连<br>达到目标后，继续消到结算</p>
             <div class="game-side-actions"><button type="button" data-open="help-dialog" class="game-text-button">玩法说明</button><button type="button" data-open="settings-dialog" class="game-text-button">设置</button></div>
           </aside>
           <div class="board-panel">
-            <div class="board-meta"><span>剩余 <strong id="remaining-count">100</strong> 块</span><span id="input-mode">点击消除</span></div>
+            <div class="board-meta"><span>剩余 <strong id="remaining-count">100</strong> 块</span><span id="run-network-status" class="run-network-status"></span><span id="input-mode" hidden></span></div>
             <div class="board-frame"><div id="board" class="board" role="group" aria-label="10×10 消除棋盘" aria-describedby="move-feedback"></div><div id="score-pop" class="score-pop" aria-hidden="true"></div></div>
-            <p id="move-feedback" class="move-feedback" role="status" aria-live="polite">点击两个及以上相连的同色方块</p>
+            <p id="move-feedback" class="move-feedback" role="status" aria-live="polite"></p>
             <div class="board-bottom"><span id="bonus-preview">结算时按剩余数量奖励</span><button id="game-restart" type="button" class="game-text-button">重新开始</button></div>
           </div>
         </div>
@@ -148,8 +147,14 @@
 
   <dialog id="help-dialog" class="modal" aria-labelledby="help-title">
     <div class="modal-header"><div><h2 id="help-title">玩法说明</h2></div><button type="button" class="icon-button" data-close aria-label="关闭玩法说明"><svg class="icon"><use href="#i-close"></use></svg></button></div>
-    <ol class="rules-list"><li><span class="rule-number">1</span><div><h3>消除同色方块</h3><p>上下左右相连的同色方块，两个及以上可以消除。斜向不算相连。</p></div></li><li><span class="rule-number">2</span><div><h3>连得越多，得分越高</h3><p>一次消除 n 个，获得 5 × n² 分；消除 10 个得 500 分。</p></div></li><li><span class="rule-number">3</span><div><h3>剩余数量决定奖励</h3><p>无法继续消除时结算；全清奖励 2000 分，剩 9 个奖励 380 分，剩 10 个及以上没有奖励。</p></div></li></ol>
-    <div class="rules-tip"><svg class="icon"><use href="#i-arrow"></use></svg><p>方块先向下落，整列清空后右侧各列向左移，不补新块。本关目标依次为 1000、3000、5200、7500、10000、13000、16000、19000；之后为 22100、25300、28600、32000，相邻目标的间隔逐关再增加 100。目标低于 19000 时每关重新随机主色，之后五色等概率生成。按累计总分判断，盘面结束后计入奖励，达标进入下一关；未达标则本局结束。</p></div>
+    <div id="help-basics">
+      <ol class="rules-list"><li><span class="rule-number">1</span><div><h3>消除与移动</h3><p>上下左右相连、同色且至少两块即可消除。色块向下落，空列由右侧向左补，不生成新块。</p></div></li><li><span class="rule-number">2</span><div><h3>连消得分</h3><p>一次消除 n 块获得 5 × n² 分，例如 10 块得 500 分。</p></div></li><li><span class="rule-number">3</span><div><h3>结算与过关</h3><p>没有可消除的色块时结算。剩余奖励为 max(0, 2000 − 20 × 剩余块数²)。累计得分达标进入下一关，否则本局结束。</p></div></li></ol>
+    </div>
+    <div id="help-levels" hidden>
+      <div class="rules-tip"><p>本关目标依次为 1000、3000、5200、7500、10000、13000、16000、19000；之后为 22100、25300、28600、32000，相邻目标间隔逐关增加 100。</p></div>
+      <div class="rules-tip"><p>目标低于 19000 时，每关重新随机主色；从 19000 开始，五色等概率生成。达到目标后仍需继续消除，直到盘面结算。</p></div>
+    </div>
+    <div class="page-controls"><button id="help-page-toggle" type="button" class="game-text-button">查看关卡规则 →</button></div>
     <button type="button" class="primary-button modal-primary" data-close>关闭</button>
   </dialog>
 
@@ -179,7 +184,7 @@
     <form id="cloud-profile-form">
       <label class="cloud-field" for="cloud-name">昵称<input id="cloud-name" name="nickname" minlength="2" maxlength="32" autocomplete="nickname" placeholder="2–16个字符" required></label>
       <p class="modal-note">头像和昵称的组合不能与其他玩家相同，之后可以修改。</p>
-      <span class="cloud-field-label">选择头像</span><div id="cloud-avatars" class="cloud-avatars" role="group" aria-label="奶龙头像"></div>
+      <div class="avatar-heading"><span class="cloud-field-label">选择头像</span><div class="page-controls"><button id="avatar-previous" class="game-text-button" type="button" aria-label="上一页头像">←</button><span id="avatar-page" aria-live="polite"></span><button id="avatar-next" class="game-text-button" type="button" aria-label="下一页头像">→</button></div></div><div id="cloud-avatars" class="cloud-avatars" role="group" aria-label="奶龙头像"></div>
       <p id="cloud-profile-error" class="cloud-error" role="status"></p>
       <button id="cloud-profile-submit" class="primary-button modal-primary" type="submit">保存玩家资料</button>
       <button id="cloud-profile-recover" type="button" class="modal-secondary">已有恢复码？找回原身份</button>
@@ -195,6 +200,15 @@
     <p class="modal-note">恢复码相当于密码，请勿分享。换设备、换浏览器或网站换域名前可用它找回身份；新生成后旧码失效。本窗口关闭后不再显示。</p>
     <input id="cloud-recovery-code" class="cloud-code" readonly aria-label="你的恢复码" autocomplete="off">
     <button id="cloud-copy-code" class="primary-button modal-primary" type="button">复制恢复码</button><button class="modal-secondary" type="button" data-close>已保存，关闭</button>
+  </dialog>
+
+  <dialog id="network-dialog" class="modal" aria-labelledby="network-title">
+    <div class="modal-header"><h2 id="network-title">暂时无法开始联网对局</h2><button type="button" class="icon-button" data-close aria-label="关闭网络提示">×</button></div>
+    <p id="network-error" class="restart-message" role="status"></p>
+    <p class="modal-note">当前进度不会被替换。重试成功后开始可上榜的新对局；本机练习只保存本机纪录。</p>
+    <button id="network-retry" type="button" class="primary-button modal-primary">重新连接</button>
+    <button id="network-practice" type="button" class="modal-secondary">先玩本机练习</button>
+    <button id="network-cancel" type="button" class="modal-secondary">返回</button>
   </dialog>
 
   <div id="settlement-overlay" class="settlement-overlay" hidden>

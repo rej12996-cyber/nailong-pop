@@ -57,7 +57,7 @@ h1 { font-size: clamp(72px, 7.2vw, 98px); font-weight: 900; line-height: 1.12; l
 .button-arrow { margin-left: auto; width: 21px; opacity: .8; }
 .continue-button { width: 100%; min-height: 51px; margin-top: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #fffdf5; border: 1px solid #ede0c2; border-radius: 13px; font-size: 13px; font-weight: 600; }
 .continue-button .icon { width: 18px; height: 18px; }
-.continue-button:disabled { color: #a5905e; background: #f3f2e8; border-color: #f1e6cd; }
+.continue-button:disabled { color: #92918a; background: #ecece7; border-color: #deded7; box-shadow: none; }
 .continue-button:not(:disabled):hover { border-color: #948053; background: #f6f0e2; }
 .continue-detail { font-size: 10px; font-weight: 400; padding-left: 11px; margin-left: 3px; border-left: 1px solid #eee2c5; }
 .quick-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 25px; }
@@ -91,7 +91,8 @@ h1 { font-size: clamp(72px, 7.2vw, 98px); font-weight: 900; line-height: 1.12; l
 .record-item .record-empty { font-size: 14px; font-weight: 500; color: #8a784e; margin-top: 4px; }
 .local-label { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 10px; color: #a69161; }
 .local-label > span { width: 4px; height: 4px; border-radius: 50%; background: #ae9b6e; }
-.modal { width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 40px); border: 1px solid #f0e5cb; background: #fffdf4; color: var(--ink); border-radius: 26px; padding: 28px; box-shadow: 0 24px 90px #6f4f1630; overflow-y: auto; overscroll-behavior: contain; }
+.modal { width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 24px); border: 1px solid #f0e5cb; background: #fffdf4; color: var(--ink); border-radius: 26px; padding: 28px; box-shadow: 0 24px 90px #6f4f1630; overflow: hidden; overscroll-behavior: contain; }
+#ranking-dialog { overflow-y: auto; }
 .modal::backdrop { background: #5a431855; backdrop-filter: blur(6px); }
 .modal[open] { animation: dialog-in .2s ease-out; }
 body:has(dialog[open]) { overflow: hidden; }
@@ -338,7 +339,7 @@ html:has(dialog[open]) { overflow: hidden; }
   .result-details { margin-top: 12px; margin-bottom: 12px; gap: 8px 18px; }
 }
 @media(max-height:560px) {
-  #result-dialog.result-modal { max-height: calc(100dvh - 28px); overflow-y: auto; }
+  #result-dialog.result-modal { max-height: calc(100dvh - 24px); }
 }
 .level-total-line { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid #f0e5cc; margin-top: 19px; padding-top: 14px; }
 .level-total-line > span { font-size: 11px; color: #8f7c50; }
@@ -413,10 +414,9 @@ html:has(dialog[open]) { overflow: hidden; }
   .board-bottom .game-text-button { min-height: 24px; padding: 4px; }
 }
 /* Cloud leaderboard follows the existing warm palette. */
-.beta-notice { margin:0 0 10px; padding:9px 12px; border:1px solid #e9d28c; border-radius:10px; background:#fff1bf; color:#805e21; text-align:center; font-size:12px; line-height:1.6; }
 .cloud-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:12px 0 4px; }
 .cloud-text-button { background:transparent; color:#966818; font-size:12px; padding:8px 2px; text-decoration:underline; text-underline-offset:3px; }
-.cloud-top { max-height: min(420px, 48dvh); overflow-y:auto; overscroll-behavior:contain; }
+.cloud-top { overflow: visible; }
 .cloud-rank-row { display:grid; grid-template-columns:28px 42px minmax(0,1fr) auto; gap:9px; align-items:center; padding:12px 7px; border-bottom:1px solid #eee4cd; }
 .cloud-rank-row.is-me { background:#fff0bd; border-radius:12px; }
 .cloud-rank-row img { width:42px; height:42px; object-fit:contain; background:#f8edcf; border-radius:10px; }
@@ -429,13 +429,13 @@ html:has(dialog[open]) { overflow: hidden; }
 .cloud-my-rank .cloud-rank-row { padding:0; border:0; }
 .cloud-section-title { font-size:13px; margin:16px 0 7px; }
 .cloud-pending-row { display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12px; }
-.cloud-dialog { max-height:calc(100dvh - 30px); overflow-y:auto; }
+.cloud-dialog { max-height:calc(100dvh - 24px); }
 .cloud-field { display:grid; gap:9px; font-size:13px; }
 .cloud-field input, .cloud-code { width:100%; box-sizing:border-box; padding:12px; border:1px solid #ddcea8; border-radius:10px; background:#fffef8; color:#534321; font:inherit; }
 .cloud-field input:focus, .cloud-code:focus { outline:2px solid #dba938; outline-offset:2px; }
 .cloud-field input { font-size:16px; }
 .cloud-field-label { display:block; font-size:13px; margin:16px 0 10px; }
-.cloud-avatars { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; max-height:260px; overflow-y:auto; padding:4px; }
+.cloud-avatars { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; padding:4px; }
 .avatar-option { background:#f8efd7; border:2px solid transparent; border-radius:12px; aspect-ratio:1; padding:3px; min-width:0; }
 .avatar-option[aria-pressed=true] { border-color:#c58d20; background:#ffe69f; }
 .avatar-option img { width:100%; height:100%; object-fit:contain; }
@@ -444,3 +444,165 @@ html:has(dialog[open]) { overflow: hidden; }
 .cloud-upload-button { width:100%; border:1px solid #d6bd80; border-radius:12px; padding:11px; margin-top:12px; background:#fff7df; color:#846126; font-weight:700; }
 .cloud-upload-button:disabled { opacity:.55; cursor:default; }
 .cloud-result-note { margin:8px 0 0; text-align:center; font-size:10px; line-height:1.6; color:#9c8858; }
+
+/* Soft raised surfaces make every secondary action recognizable on touch screens. */
+:is(.game-text-button, .restart-link, .quick-actions button, .icon-button, .music-button, .modal-secondary, .cloud-text-button) {
+  background: #f7edcf; border: 1px solid #e9d9ac; color: #79602e;
+  box-shadow: 0 2px 0 #dac594, inset 0 1px 0 #fffdf7;
+  transition: background .15s, box-shadow .15s, transform .15s;
+}
+:is(.game-text-button, .restart-link, .quick-actions button, .icon-button, .music-button, .modal-secondary, .cloud-text-button):hover:not(:disabled) {
+  background: #eddaa6; box-shadow: 0 3px 0 #ceb57d, inset 0 1px 0 #fff8df; transform: translateY(-1px);
+}
+:is(.game-text-button, .restart-link, .quick-actions button, .icon-button, .music-button, .modal-secondary, .cloud-text-button):active:not(:disabled) {
+  transform: translateY(2px); box-shadow: none; background: #e5cc8d;
+}
+:is(.game-text-button, .restart-link, .icon-button, .cloud-text-button, .primary-button):disabled { opacity: .5; box-shadow: none; transform: none; }
+.quick-actions button { flex: 1; padding: 8px; }
+.quick-actions .action-icon { background: transparent; }
+.restart-link { min-height: 36px; font-size: 12px; margin-top: 16px; }
+.game-side-actions { margin: 20px 0 0; }
+.cloud-text-button { border-radius: 9px; padding: 8px 10px; text-decoration: none; }
+.game-toolbar .game-text-button { padding-inline: 12px; }
+.run-network-status { font-size: 10px; color: #8a7750; }
+.run-network-status.is-online { color: #6b792e; }
+.board-meta { gap: 6px; flex-wrap: wrap; }
+.page-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+#help-dialog > .page-controls { margin-top: 18px; }
+.avatar-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0 8px; }
+.avatar-heading .cloud-field-label { margin: 0; }
+.avatar-heading .game-text-button { min-height: 30px; padding: 3px 10px; }
+#avatar-page { font-size: 11px; color: #8a7750; font-variant-numeric: tabular-nums; }
+.move-feedback:empty { min-height: 0; margin-top: 10px; }
+#result-dialog.result-modal { --mascot-height: clamp(0px, calc(100dvh - 455px), 250px); overflow: visible; max-height: calc(100dvh - 24px); }
+.result-illustration { max-width: 100vw; }
+
+@media (max-width: 820px) and (min-height: 541px) {
+  .playing .page-shell { max-width: 440px; padding-inline: 12px; }
+  .playing .site-header { min-height: 44px; }
+  .playing .brand-mark { width: 26px; height: 28px; }
+  .playing .header-tools button { min-height: 30px; width: 30px; padding: 4px; }
+  .game-screen { padding: 5px 0 8px; }
+  .game-toolbar { margin-bottom: 5px; }
+  .game-toolbar .game-text-button { min-height: 28px; padding: 3px 10px; }
+  .game-layout { gap: 6px; }
+  .score-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 3px 10px; }
+  .stage-heading { grid-column: 1 / -1; min-height: 24px; margin-bottom: 2px; }
+  .stage-heading h2 { font-size: 20px; line-height: 1.1; }
+  .target-status { padding: 3px 8px; }
+  .score-label { grid-column: 1; grid-row: 2; margin: 0; align-self: end; }
+  .game-total { grid-column: 1; grid-row: 3; font-size: 30px; line-height: 1; letter-spacing: -1px; }
+  .target-line { grid-column: 2; grid-row: 2 / 4; display: block; margin: 0; padding: 4px 8px; }
+  .target-main { gap: 5px; }
+  .target-main > span { font-size: 12px; }
+  .target-line strong { font-size: 23px; line-height: 26px; }
+  #target-gap { display: block; font-size: 10px; line-height: 12px; }
+  .score-panel progress { grid-column: 1 / -1; margin: 5px 0 0; height: 4px; }
+  .score-details { grid-column: 1 / -1; margin: 3px 0 0; padding-top: 3px; gap: 5px; }
+  .score-details > div { gap: 1px; }
+  .score-details dt { font-size: 10px; line-height: 12px; }
+  .score-details dd { font-size: 13px; line-height: 15px; }
+  .level-total-line { grid-column: 1 / -1; padding: 0; margin: 1px 0 0; border: 0; }
+  .level-total-line > strong { font-size: 17px; line-height: 20px; }
+  .game-side-actions { display: none; }
+  .board-meta { min-height: 18px; margin-bottom: 4px; }
+  .move-feedback { min-height: 18px; font-size: 10px; line-height: 18px; margin: 8px 0 2px; }
+  .move-feedback:empty { min-height: 18px; margin-top: 8px; }
+  .board-bottom .game-text-button { min-height: 30px; padding: 4px 8px; font-size: 11px; }
+}
+
+@media (max-width: 820px), (max-height: 700px) {
+  .modal { padding: 18px; border-radius: 20px; }
+  .modal-header { margin-bottom: 14px; align-items: center; }
+  .modal-header h2 { font-size: 21px; }
+  .modal-header .icon-button { margin: 0; flex-shrink: 0; }
+  .modal-note { font-size: 11px; margin: 12px 0; line-height: 1.6; }
+  .setting-row { min-height: 66px; gap: 12px; }
+  .setting-row small { font-size: 11px; line-height: 1.5; }
+  .modal-primary { min-height: 42px; margin-top: 10px; }
+  .modal-secondary { min-height: 36px; margin-top: 10px; }
+  .rules-list { gap: 14px; }
+  .rules-list li { gap: 10px; }
+  .rules-list h3 { margin: 2px 0 5px; }
+  .rules-list p, .rules-tip p { color: #8a7447; font-size: 12px; line-height: 1.65; }
+  .rules-tip { margin: 12px 0; padding: 12px; }
+  #help-dialog > .page-controls { margin-top: 12px; }
+  .cloud-field { gap: 6px; }
+  .cloud-field input { padding: 9px 10px; }
+  .cloud-avatars { gap: 6px; }
+  .cloud-error { margin: 8px 0; min-height: 18px; line-height: 1.5; }
+  .cloud-code { font-size: 11px; }
+  #result-dialog.result-modal { --mascot-height: clamp(0px, calc(100dvh - 470px), 230px); }
+  .result-card { padding: 16px 18px 12px; }
+  .result-heading h2 { margin: 3px 0 10px; }
+  .result-details { gap: 7px 16px; margin: 10px 0; }
+  .result-details .level-final, .result-details > div:last-child { padding-top: 7px; }
+  .cloud-upload-button { margin-top: 10px; padding: 9px; font-size: 13px; }
+  .cloud-result-note { margin-top: 6px; }
+}
+
+@media (max-height: 600px) {
+  .modal { padding: 14px; }
+  .modal-header { margin-bottom: 10px; }
+  .modal-note { margin: 8px 0; }
+  .setting-row { min-height: 59px; }
+  .rules-list { gap: 10px; }
+  .rules-list p, .rules-tip p { font-size: 11px; line-height: 1.6; }
+  .result-heading h2 { font-size: 23px; margin-bottom: 7px; }
+  .result-total { padding: 7px 10px; gap: 1px; }
+  .result-total > strong { font-size: 29px; }
+  #result-dialog.result-modal { --mascot-height: clamp(0px, calc(100dvh - 470px), 180px); }
+}
+
+@media (max-height: 500px) {
+  .modal { width: min(560px, calc(100vw - 24px)); padding: 12px 16px; }
+  .modal-header h2 { font-size: 18px; }
+  .modal-header { margin-bottom: 8px; }
+  .modal-note { margin: 6px 0; font-size: 10px; }
+  .setting-row { min-height: 53px; }
+  .setting-row small { margin-top: 2px; font-size: 10px; }
+  .modal-primary { min-height: 34px; margin-top: 8px; }
+  .modal-secondary { min-height: 30px; margin-top: 8px; }
+  .rules-list { gap: 8px; }
+  .rules-list h3 { font-size: 12px; margin-bottom: 2px; }
+  .rules-tip { margin: 8px 0; padding: 8px; }
+  #help-dialog > .page-controls { margin-top: 8px; }
+  #help-page-toggle { min-height: 30px; padding-block: 4px; }
+  .avatar-option { max-height: 56px; }
+  .cloud-avatars { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+  .cloud-avatars .avatar-option { aspect-ratio: auto; height: 50px; }
+  .avatar-heading { margin-block: 6px; }
+  #cloud-profile-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 5px 12px; }
+  #cloud-profile-form > .modal-note { margin: 0; text-align: left; align-self: end; }
+  #cloud-profile-form > :is(.avatar-heading, .cloud-avatars, .cloud-error) { grid-column: 1 / -1; margin-block: 0; }
+  #cloud-profile-form > :is(.modal-primary, .modal-secondary) { margin-top: 0; }
+  .cloud-field input { padding: 6px 9px; }
+  .cloud-error { margin-block: 5px; }
+  #result-dialog.result-modal { --mascot-height: 0px; width: min(420px, calc(100vw - 24px)); }
+  .result-card { padding: 8px 16px; }
+  .result-heading .eyebrow { line-height: 12px; }
+  .result-heading h2 { font-size: 22px; margin: 1px 0 5px; }
+  .result-details { gap: 4px 16px; margin: 7px 0; }
+  .result-details .level-final, .result-details > div:last-child { padding-top: 4px; }
+  .result-card .modal-primary { min-height: 34px; }
+  .result-card .modal-secondary { min-height: 25px; margin-top: 6px; }
+  .cloud-upload-button { min-height: 32px; padding: 6px; margin-top: 8px; }
+}
+
+@media (max-width: 400px) and (min-height: 541px) and (max-height: 620px) {
+  .playing .site-header { min-height: 40px; }
+  .game-screen { padding-block: 3px; }
+  .game-toolbar { margin-bottom: 3px; }
+  .score-panel { gap: 2px 8px; }
+  .stage-heading { min-height: 21px; margin-bottom: 0; }
+  .stage-heading h2 { font-size: 18px; }
+  .game-total { font-size: 25px; }
+  .target-main > span { font-size: 11px; }
+  .target-line strong { font-size: 20px; line-height: 23px; }
+  .score-panel progress { margin-top: 2px; }
+  .score-details { margin-top: 2px; padding-top: 2px; }
+  .score-details dt { font-size: 9px; }
+  .level-total-line > strong { font-size: 15px; line-height: 18px; }
+  .move-feedback, .move-feedback:empty { min-height: 14px; margin-top: 5px; line-height: 14px; }
+  .board-bottom .game-text-button { min-height: 28px; }
+}
