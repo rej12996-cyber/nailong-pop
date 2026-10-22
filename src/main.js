@@ -3,8 +3,15 @@ import { levelSkins, resultMascotForSeed } from './skins.js';
 import { EliminationAudio } from './audio.js';
 import { setupLeaderboard } from './leaderboard.js';
 import { competitionSeed } from './competition.js';
+import { isBeta, storageKey } from './environment.js';
 
-const KEYS = { settings: 'nailong.settings.v1', records: 'nailong.records.v1', session: 'nailong.session.v2' };
+const KEYS = Object.fromEntries(Object.entries({ settings: 'nailong.settings.v1', records: 'nailong.records.v1', session: 'nailong.session.v2' }).map(([name, key]) => [name, storageKey(key)]));
+if (isBeta) {
+  const notice = document.createElement('p');
+  notice.className = 'beta-notice';
+  notice.textContent = '联网内测 · 正式上线将清空内测战绩和玩家身份';
+  document.querySelector('.site-header').after(notice);
+}
 const DEFAULT_RECORDS = { bestScore: 0, bestLevel: 0, totalCleared: 0 };
 const $ = (selector) => document.querySelector(selector);
 const format = (value) => value.toLocaleString('zh-CN');

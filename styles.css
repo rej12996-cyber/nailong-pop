@@ -413,6 +413,7 @@ html:has(dialog[open]) { overflow: hidden; }
   .board-bottom .game-text-button { min-height: 24px; padding: 4px; }
 }
 /* Cloud leaderboard follows the existing warm palette. */
+.beta-notice { margin:0 0 10px; padding:9px 12px; border:1px solid #e9d28c; border-radius:10px; background:#fff1bf; color:#805e21; text-align:center; font-size:12px; line-height:1.6; }
 .cloud-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; margin:12px 0 4px; }
 .cloud-text-button { background:transparent; color:#966818; font-size:12px; padding:8px 2px; text-decoration:underline; text-underline-offset:3px; }
 .cloud-top { max-height: min(420px, 48dvh); overflow-y:auto; overscroll-behavior:contain; }

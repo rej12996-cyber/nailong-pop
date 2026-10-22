@@ -1,3 +1,2 @@
-// Configure an HTTPS API base only after the public domain is ready.
-// Local private testing uses the preview server's /api proxy instead.
-export const CLOUD_API_BASE = '';
+export const CLOUD_API_BASE = "https://43.142.137.103/api";
+export const BUILD_CHANNEL = 'beta-20261017';

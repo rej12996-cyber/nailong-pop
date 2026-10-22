@@ -1,9 +1,10 @@
 import { AVATARS } from './avatars.js';
 import { CLOUD_API_BASE } from './cloud-config.js';
 import { replayPayload } from './competition.js';
+import { isBeta, storageKey } from './environment.js';
 
-const KEY = 'nailong.cloud.v1';
-const QUEUE_KEY = 'nailong.pending.v1';
+const KEY = storageKey('nailong.cloud.v1');
+const QUEUE_KEY = storageKey('nailong.pending.v1');
 const randomKey = () => [...crypto.getRandomValues(new Uint8Array(32))].map(value => value.toString(16).padStart(2, '0')).join('');
 export const beijingDate = timestamp => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(timestamp));
 
@@ -90,7 +91,8 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
   let selectedAvatar = AVATARS[0].id;
   let uploadRunId = null;
   let operating = false;
-  document.querySelector('#online-tab span').textContent = client.enabled ? '永久总榜' : '待开放';
+  const boardName = isBeta ? '内测总榜' : '永久总榜';
+  document.querySelector('#online-tab span').textContent = client.enabled ? boardName : '待开放';
   function notice(text) { $('cloud-message').textContent = text; }
   function makeRow(row, mine = false) {
     const element = document.createElement('div'); element.className = `cloud-rank-row${mine ? ' is-me' : ''}`;
@@ -118,7 +120,7 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
     $('cloud-profile-label').textContent = player ? `${player.name} · 修改资料` : '设置玩家资料';
     $('cloud-code-button').hidden = !player;
     $('cloud-code-button').textContent = player?.hasRecovery ? '更换恢复码（旧码失效）' : '生成身份恢复码';
-    $('cloud-identity-note').textContent = player ? '身份保存在当前浏览器。更换设备或域名前，请保存恢复码。' : '首次上传时设置头像和昵称；有恢复码可先找回原身份。';
+    $('cloud-identity-note').textContent = (player ? '身份保存在当前浏览器。更换设备或域名前，请保存恢复码。' : '首次上传时设置头像和昵称；有恢复码可先找回原身份。') + (isBeta ? ' 内测身份与战绩不带入正式服。' : '');
     renderPending();
   }
   async function refresh() {
@@ -132,7 +134,7 @@ export function setupLeaderboard({ toast, openDialog, onUploaded }) {
       $('cloud-my-rank').replaceChildren();
       if (result.me) $('cloud-my-rank').append(makeRow(result.me, true));
       else $('cloud-my-rank').textContent = '我的排名：尚未上传有效战绩';
-      notice(result.totalPlayers ? `永久总榜 · ${result.totalPlayers.toLocaleString('zh-CN')} 人上榜 · 前100名` : '暂无云端战绩，等待第一位玩家。');
+      notice(result.totalPlayers ? `${boardName} · ${result.totalPlayers.toLocaleString('zh-CN')} 人上榜 · 前100名` : '暂无云端战绩，等待第一位玩家。');
       renderProfile();
     } catch (error) { notice(error.message); renderProfile(); }
   }
